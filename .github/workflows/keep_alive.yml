@@ -1,0 +1,29 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # 每 30 天的凌晨 0 点运行一次（避免达到 60 天的限制）
+    - cron: '0 0 1/30 * *'
+  workflow_dispatch: # 允许手动触发测试
+
+jobs:
+  active:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 必须赋予写入权限才能提交代码
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Update Last Run Date
+        run: |
+          echo "Last active: $(date)" > .github/keep_alive.txt
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/keep_alive.txt
+          git commit -m "chore: keep repository active to prevent workflow suspension" || exit 0
+          git push
